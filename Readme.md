@@ -6,7 +6,8 @@
 ​		
 
 ```
-go get -u github.com/godaner/wxrobot
+cd ${GOPATH}/src
+git clone https://github.com/godaner/wxrobot.git
 ```
 
 
@@ -16,8 +17,12 @@ go get -u github.com/godaner/wxrobot
 ​		
 
 ```
-cd ${GOPATH}/src/github.com/godaner/wxrobot
-go run main.go -textReplyPath ${GOPATH}/src/github.com/godaner/wxrobot/textreply.cfg
+cd ${GOPATH}/src/wxrobot
+go run main.go -textReplyPath ${GOPATH}/src/wxrobot/textreply.cfg
+if you wanna run wxrobot in background:
+	nohup go run main.go -textReplyPath ${GOPATH}/src/wxrobot/textreply.cfg >wxrobot.log 2>&1 & 
+if you wanna see log:
+	tail -f wxrobot.log
 ```
 
 
