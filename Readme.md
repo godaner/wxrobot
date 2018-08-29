@@ -12,7 +12,7 @@ git clone https://github.com/godaner/wxrobot.git
 
 
 
-### 	run：
+### 	run demo：
 
 ​		
 
@@ -27,18 +27,18 @@ if you wanna see log:
 
 
 
-### 	result:
+### 	demo result：
 
 ​	
 
 ```
-API server listening at: 127.0.0.1:63805
-2018/08/29 16:09:59 wx.go:89: Please open link in browser: https://login.weixin.qq.com/qrcode/Admjurf_7g==
-2018/08/29 16:10:06 wx.go:118: scan success, please confirm login on your phone
-2018/08/29 16:10:08 wx.go:121: login success
-2018/08/29 16:10:12 wx.go:290: update 141 contacts
-2018/08/29 16:10:12 wx.go:413: @79d6d9e7408e66f2401204a8e31f26ece703127f81e98851c43e7245290fa770: 
-2018/08/29 16:10:30 wx.go:413: @79d6d9e7408e66f2401204a8e31f26ece703127f81e98851c43e7245290fa770:你们几点结束？
-2018/08/29 16:15:58 wx.go:413: @79d6d9e7408e66f2401204a8e31f26ece703127f81e98851c43e7245290fa770: 
+2018/08/29 09:44:24 wx.go:104: Please open link in browser: https://login.weixin.qq.com/qrcode/IesWCyGxZg==
+2018/08/29 09:44:49 wx.go:129: login timeout, reconnecting...
+2018/08/29 09:45:09 wx.go:133: scan success, please confirm login on your phone
+2018/08/29 09:45:12 wx.go:136: login success
+2018/08/29 09:45:19 wx.go:305: update 141 contacts
+2018/08/29 09:45:19 wx.go:313: @c458675e3c522f5f0bc436f0a861ca16 => 微信安全中心
+2018/08/29 09:45:19 wx.go:313: @c8e81be227ce9428490833eb837a5ee81f3b9b6beed19809cdd4a53976fd4104 => 快乐人生
+......
 ```
 
