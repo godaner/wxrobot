@@ -10,6 +10,18 @@ cd ${GOPATH}/src
 git clone https://github.com/godaner/wxrobot.git
 ```
 
+### textreply.cfg：
+
+```
+[default]
+hello: hello , i am godaner !
+
+explain:
+	*.it is a demo reply config
+	*.don't change node [default].
+    *.if anyone send "hello" to you , your wxrobot will response "hello , i am godaner !" to him auto.
+```
+
 
 
 ### 	run demo：
