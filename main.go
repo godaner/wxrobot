@@ -1,25 +1,45 @@
 package main
 
 import (
-	"flag"
 	"log"
 
 	"wxrobot/wx"
+	"github.com/larspensjo/config"
+	"flag"
 )
 
+var TextReplyPath string
+func init(){
+	textReplyPath :=flag.String("textReplyPath","","")
+
+	flag.Parse()
+
+	TextReplyPath=*textReplyPath
+}
 
 func main() {
-	flag.Parse()
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	err := wx.Init(&wx.MessageHandler{
+	err0 := wx.Init(&wx.MessageHandler{
 		TextHandler:textHandler,
 	})
-	if err != nil {
-		log.Fatal(err.Error())
+	if err0 != nil {
+		log.Fatal(err0.Error())
 	}
+
+
 	wx.Listening()
 }
 
+
 func textHandler(msg *wx.Message){
-	wx.SendMsg(msg.FromUserName,"haha")
+	c, _ := config.ReadDefault(TextReplyPath)
+	reply,err:=c.String("default", msg.Content)
+	if err!=nil {
+		log.Println("textHandler : get reply is err ! err is : ",err)
+		return
+	}
+	if reply!=""{
+		wx.SendMsg(msg.FromUserName,reply)
+	}
 }

@@ -17,7 +17,7 @@ go get -u github.com/godaner/wxrobot
 
 ```
 cd ${GOPATH}/src/github.com/godaner/wxrobot
-go run main.go
+go run main.go -textReplyPath ${GOPATH}/src/github.com/godaner/wxrobot/textreply.cfg
 ```
 
 
