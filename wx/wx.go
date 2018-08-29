@@ -11,6 +11,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"bytes"
+	"os"
+	"github.com/546669204/golang-http-do"
+	"github.com/tuotoo/qrcode"
+	"github.com/mdp/qrterminal"
 )
 
 var (
@@ -100,8 +105,26 @@ func (wx *Weixin) getUuid() (string, error) {
 }
 
 func (wx *Weixin) ShowQRcodeUrl(uuid string) error {
-	uri := fmt.Sprintf("%s/qrcode/%s", LoginUri, uuid)
-	log.Println("Please open link in browser: " + uri)
+	//qr url
+	qrStr := fmt.Sprintf("%s/qrcode/%s", LoginUri, uuid)
+
+	log.Println("Please open link in browser: " + qrStr," , or you can scan this qr :")
+	//qr img
+	qrStrP:=&qrStr
+	op := httpdo.Default()
+	op.Url = `https://login.weixin.qq.com/qrcode/` + uuid
+	httpbyte, err := httpdo.HttpDo(op)
+	if err != nil {
+		log.Println(err)
+		return errors.New("get qr byte err")
+	}
+	M, err := qrcode.Decode(bytes.NewReader(httpbyte))
+	if qrStrP != nil {
+		qrterminal.GenerateHalfBlock(M.Content, qrterminal.L, os.Stdout)
+	} else {
+		*qrStrP = M.Content
+	}
+
 	return nil
 }
 

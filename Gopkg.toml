@@ -32,3 +32,15 @@
 [[constraint]]
   branch = "master"
   name = "github.com/larspensjo/config"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/546669204/golang-http-do"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/tuotoo/qrcode"
+
+[[constraint]]
+  name = "github.com/mdp/qrterminal"
+  version = "1.0.0"
