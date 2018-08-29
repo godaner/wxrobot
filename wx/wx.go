@@ -14,31 +14,47 @@ import (
 )
 
 var (
-	LoginUri             = "https://login.weixin.qq.com"
-	ErrUnknow            = errors.New("Unknow Error")
-	ErrUserNotExists     = errors.New("Error User Not Exist")
-	ErrNotLogin          = errors.New("Not Login")
-	ErrLoginTimeout      = errors.New("Login Timeout")
-	ErrWaitingForConfirm = errors.New("Waiting For Confirm")
+	LoginUri                   = "https://login.weixin.qq.com"
+	ErrUnknow                  = errors.New("Unknow Error")
+	ErrUserNotExists           = errors.New("Error User Not Exist")
+	ErrNotLogin                = errors.New("Not Login")
+	ErrLoginTimeout            = errors.New("Login Timeout")
+	ErrWaitingForConfirm       = errors.New("Waiting For Confirm")
+	TEXT_MSG             int64 = 1
+	IMG_MSG              int64 = 3
+	VOICE_MSG            int64 = 34
+	FACE_0_MSG           int64 = 43
+	FACE_1_MSG           int64 = 47
+	LINK_MSG             int64 = 49
+	ENTER_CHAT_MSG       int64 = 51
+
+	MSG_TYPE_MAP = map[int64]string{
+		TEXT_MSG:"TEXT_MSG",
+		IMG_MSG:"IMG_MSG",
+		VOICE_MSG:"VOICE_MSG",
+		FACE_0_MSG:"FACE_0_MSG",
+		FACE_1_MSG:"FACE_1_MSG",
+		LINK_MSG:"LINK_MSG",
+		ENTER_CHAT_MSG:"ENTER_CHAT_MSG",
+	}
 )
 
 type Weixin struct {
-	httpClient  *Client
-	secret      *wxSecret
-	baseRequest *BaseRequest
-	user        *User
-	contacts    map[string]*User
+	httpClient     *Client
+	secret         *wxSecret
+	baseRequest    *BaseRequest
+	user           *User
+	contacts       map[string]*User
 	messageHandler *MessageHandler
 }
 
-
 func NewWeixin(messageHandler *MessageHandler) *Weixin {
 	return &Weixin{
-		httpClient:  NewClient(),
-		secret:      &wxSecret{},
-		baseRequest: &BaseRequest{},
-		user:        &User{},
-		messageHandler:messageHandler,
+		httpClient:     NewClient(),
+		secret:         &wxSecret{},
+		baseRequest:    &BaseRequest{},
+		user:           &User{},
+		messageHandler: messageHandler,
 	}
 }
 
@@ -54,7 +70,7 @@ func (wx *Weixin) GetUser(userName string) (*User, error) {
 func (wx *Weixin) GetUserName(userName string) string {
 	u, err := wx.GetUser(userName)
 	if err != nil {
-		return userName
+		return "[myself]"
 	}
 	if u.RemarkName != "" {
 		return u.RemarkName
@@ -294,6 +310,7 @@ func (wx *Weixin) GetContacts() error {
 func (wx *Weixin) updateContacts(us []*User) error {
 	for _, u := range us {
 		wx.contacts[u.UserName] = u
+		log.Printf("%s => %s", u.UserName, u.NickName)
 	}
 	return nil
 }
@@ -399,42 +416,44 @@ func (wx *Weixin) SendMsg(userName, msg string) error {
 	}
 	return wx.CheckCode(b, "发送消息失败")
 }
-
 func (wx *Weixin) HandleMsg(m *Message) {
-	log.Printf("%s: %s", wx.GetUserName(m.FromUserName), m.Content)
-	if m.MsgType == 1 { // 文本消息
-		if wx.messageHandler.TextHandler !=nil{
+	log.Printf("[%s] from %s to %s : %s", MSG_TYPE_MAP[m.MsgType], wx.GetUserName(m.FromUserName), wx.GetUserName(m.ToUserName), m.Content)
+	switch m.MsgType {
+	case TEXT_MSG: // 文本消息
+		if wx.messageHandler.TextHandler != nil {
 			wx.messageHandler.TextHandler(m)
 		}
-	} else if m.MsgType == 3 { // 图片消息
-		if wx.messageHandler.ImgHandler !=nil{
+	case IMG_MSG:// 图片消息
+		if wx.messageHandler.ImgHandler != nil {
 			wx.messageHandler.ImgHandler(m)
 		}
-	} else if m.MsgType == 34 { // 语音消息
-		if wx.messageHandler.VoiceHandler !=nil{
+	case VOICE_MSG:// 语音消息
+		if wx.messageHandler.VoiceHandler != nil {
 			wx.messageHandler.VoiceHandler(m)
 		}
-	} else if m.MsgType == 43 { // 表情消息
-		if wx.messageHandler.FaceHandler !=nil{
+	case FACE_0_MSG:// 表情消息
+		if wx.messageHandler.FaceHandler != nil {
 			wx.messageHandler.FaceHandler(m)
 		}
-	} else if m.MsgType == 47 { // 表情消息
-		if wx.messageHandler.FaceHandler !=nil{
+	case FACE_1_MSG:// 表情消息
+		if wx.messageHandler.FaceHandler != nil {
 			wx.messageHandler.FaceHandler(m)
 		}
-	} else if m.MsgType == 49 { // 链接消息
-		if wx.messageHandler.LinkHandler !=nil{
+	case LINK_MSG:// 链接消息
+		if wx.messageHandler.LinkHandler != nil {
 			wx.messageHandler.LinkHandler(m)
 		}
-	} else if m.MsgType == 51 { // 用户在手机进入某个联系人聊天界面时收到的消息
-		if wx.messageHandler.EnterChatHandler !=nil{
+	case ENTER_CHAT_MSG:// 用户在手机进入某个联系人聊天界面时收到的消息
+		if wx.messageHandler.EnterChatHandler != nil {
 			wx.messageHandler.EnterChatHandler(m)
 		}
-	} else {
-		if wx.messageHandler.UnKnowHandler !=nil{
+	default:
+
+		if wx.messageHandler.UnKnowHandler != nil {
 			wx.messageHandler.UnKnowHandler(m)
 		}
 	}
+
 }
 
 func (wx *Weixin) Listening() error {

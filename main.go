@@ -6,6 +6,7 @@ import (
 	"wxrobot/wx"
 	"github.com/larspensjo/config"
 	"flag"
+	"fmt"
 )
 
 var TextReplyPath string
@@ -33,6 +34,11 @@ func main() {
 
 
 func textHandler(msg *wx.Message){
+	defer func() {
+		if err := recover();err != nil {
+			fmt.Println(err)
+		}
+	}()
 	c, _ := config.ReadDefault(TextReplyPath)
 	reply,err:=c.String("default", msg.Content)
 	if err!=nil {
