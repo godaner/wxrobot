@@ -42,10 +42,11 @@ func textHandler(msg *wx.Message){
 	c, _ := config.ReadDefault(TextReplyPath)
 	reply,err:=c.String("default", msg.Content)
 	if err!=nil {
-		log.Println("textHandler : get reply is err ! err is : ",err)
+		//log.Println("textHandler : get reply is err ! err is : ",err)
 		return
 	}
-	if reply!=""{
-		wx.SendMsg(msg.FromUserName,reply)
+	if reply==""{
+		return
 	}
+	wx.SendMsg(msg.FromUserName,reply)
 }
