@@ -24,21 +24,21 @@ const (
 )
 
 type WXRobot struct {
-	httpClient     *Client
-	secret         *wxSecret
-	baseRequest    *BaseRequest
-	user           *User
-	contacts       map[string]*User
-	messageHandler *MessageHandler
+	httpClient  *Client
+	secret      *wxSecret
+	baseRequest *BaseRequest
+	user        *User
+	contacts    map[string]*User
+	handler     *Handler
 }
 
-func NewWeixin(messageHandler *MessageHandler) *WXRobot {
+func NewWeixin() *WXRobot {
 	return &WXRobot{
-		httpClient:     NewClient(),
-		secret:         &wxSecret{},
-		baseRequest:    &BaseRequest{},
-		user:           &User{},
-		messageHandler: messageHandler,
+		httpClient:  NewClient(),
+		secret:      &wxSecret{},
+		baseRequest: &BaseRequest{},
+		user:        &User{},
+		handler:     &Handler{},
 	}
 }
 
@@ -103,6 +103,8 @@ func (wxRobot *WXRobot) ShowQRcodeUrl(uuid string) error {
 	} else {
 		*qrStrP = M.Content
 	}
+
+	wxRobot.handler.ShowQRHandler(qrStrP)
 
 	return nil
 }
@@ -440,37 +442,37 @@ func (wxRobot *WXRobot) HandleMsg(m *Message) {
 	log.Printf("[%s] from %s to %s : %s", MSG_TYPE_MAP[m.MsgType], wxRobot.GetUserName(m.FromUserName), wxRobot.GetUserName(m.ToUserName), m.Content)
 	switch m.MsgType {
 	case MSG_TEXT: // 文本消息
-		if wxRobot.messageHandler.TextHandler != nil {
-			wxRobot.messageHandler.TextHandler(m)
+		if wxRobot.handler.TextHandler != nil {
+			wxRobot.handler.TextHandler(m)
 		}
 	case MSG_IMG: // 图片消息
-		if wxRobot.messageHandler.ImgHandler != nil {
-			wxRobot.messageHandler.ImgHandler(m)
+		if wxRobot.handler.ImgHandler != nil {
+			wxRobot.handler.ImgHandler(m)
 		}
 	case MSG_VOICE: // 语音消息
-		if wxRobot.messageHandler.VoiceHandler != nil {
-			wxRobot.messageHandler.VoiceHandler(m)
+		if wxRobot.handler.VoiceHandler != nil {
+			wxRobot.handler.VoiceHandler(m)
 		}
 	case MSG_FACE_0: // 表情消息
-		if wxRobot.messageHandler.FaceHandler != nil {
-			wxRobot.messageHandler.FaceHandler(m)
+		if wxRobot.handler.FaceHandler != nil {
+			wxRobot.handler.FaceHandler(m)
 		}
 	case MSG_FACE_1: // 表情消息
-		if wxRobot.messageHandler.FaceHandler != nil {
-			wxRobot.messageHandler.FaceHandler(m)
+		if wxRobot.handler.FaceHandler != nil {
+			wxRobot.handler.FaceHandler(m)
 		}
 	case MSG_LINK: // 链接消息
-		if wxRobot.messageHandler.LinkHandler != nil {
-			wxRobot.messageHandler.LinkHandler(m)
+		if wxRobot.handler.LinkHandler != nil {
+			wxRobot.handler.LinkHandler(m)
 		}
 	case MSG_ENTER_CHAT: // 用户在手机进入某个联系人聊天界面时收到的消息
-		if wxRobot.messageHandler.EnterChatHandler != nil {
-			wxRobot.messageHandler.EnterChatHandler(m)
+		if wxRobot.handler.EnterChatHandler != nil {
+			wxRobot.handler.EnterChatHandler(m)
 		}
 	default:
 
-		if wxRobot.messageHandler.UnKnowHandler != nil {
-			wxRobot.messageHandler.UnKnowHandler(m)
+		if wxRobot.handler.UnKnowHandler != nil {
+			wxRobot.handler.UnKnowHandler(m)
 		}
 	}
 
