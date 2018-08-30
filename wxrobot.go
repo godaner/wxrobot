@@ -136,7 +136,7 @@ func (wxrobot *WXRobot) WaitingForLoginConfirm(uuid string) (string, error) {
 		values.Set("uuid", uuid)
 		values.Set("tip", tip)
 		values.Set("_", TimestampStr())
-		b, err := wxrobot.httpClient.Get("https://login.wxRobot.qq.com/cgi-bin/mmwebwx-bin/login", values)
+		b, err := wxrobot.httpClient.Get("https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login", values)
 		if err != nil {
 			log.Printf("HTTP GET err: %s", err.Error())
 			return "", err
