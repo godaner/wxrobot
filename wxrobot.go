@@ -1,47 +1,26 @@
 package wxrobot
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/546669204/golang-http-do"
+	"github.com/mdp/qrterminal"
+	"github.com/tuotoo/qrcode"
 	"log"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"bytes"
-	"os"
-	"github.com/546669204/golang-http-do"
-	"github.com/tuotoo/qrcode"
-	"github.com/mdp/qrterminal"
 )
 
-var (
-	LoginUri                   = "https://login.weixin.qq.com"
-	ErrUnknow                  = errors.New("Unknow Error")
-	ErrUserNotExists           = errors.New("Error User Not Exist")
-	ErrNotLogin                = errors.New("Not Login")
-	ErrLoginTimeout            = errors.New("Login Timeout")
-	ErrWaitingForConfirm       = errors.New("Waiting For Confirm")
-	TEXT_MSG             int64 = 1
-	IMG_MSG              int64 = 3
-	VOICE_MSG            int64 = 34
-	FACE_0_MSG           int64 = 43
-	FACE_1_MSG           int64 = 47
-	LINK_MSG             int64 = 49
-	ENTER_CHAT_MSG       int64 = 51
+const (
+	LOGIN_URL = "https://login.weixin.qq.com"
 
-	MSG_TYPE_MAP = map[int64]string{
-		TEXT_MSG:"TEXT_MSG",
-		IMG_MSG:"IMG_MSG",
-		VOICE_MSG:"VOICE_MSG",
-		FACE_0_MSG:"FACE_0_MSG",
-		FACE_1_MSG:"FACE_1_MSG",
-		LINK_MSG:"LINK_MSG",
-		ENTER_CHAT_MSG:"ENTER_CHAT_MSG",
-	}
 )
 
 type WXRobot struct {
@@ -68,7 +47,7 @@ func (wxRobot *WXRobot) GetUser(userName string) (*User, error) {
 	if ok {
 		return u, nil
 	} else {
-		return nil, ErrUserNotExists
+		return nil, errors.New("Error User Not Exist")
 	}
 }
 
@@ -90,7 +69,7 @@ func (wxRobot *WXRobot) getUuid() (string, error) {
 	values.Set("fun", "new")
 	values.Set("lang", "zh_CN")
 	values.Set("_", TimestampStr())
-	uri := fmt.Sprintf("%s/jslogin", LoginUri)
+	uri := fmt.Sprintf("%s/jslogin", LOGIN_URL)
 	b, err := wxRobot.httpClient.Get(uri, values)
 	if err != nil {
 		return "", err
@@ -106,11 +85,11 @@ func (wxRobot *WXRobot) getUuid() (string, error) {
 
 func (wxRobot *WXRobot) ShowQRcodeUrl(uuid string) error {
 	//qr url
-	qrStr := fmt.Sprintf("%s/qrcode/%s", LoginUri, uuid)
+	qrStr := fmt.Sprintf("%s/qrcode/%s", LOGIN_URL, uuid)
 
-	log.Println("Please open link in browser: " + qrStr," , or you can scan this qr :")
+	log.Println("Please open link in browser: "+qrStr, " , or you can scan this qr :")
 	//qr img
-	qrStrP:=&qrStr
+	qrStrP := &qrStr
 	op := httpdo.Default()
 	op.Url = `https://login.weixin.qq.com/qrcode/` + uuid
 	httpbyte, err := httpdo.HttpDo(op)
@@ -145,13 +124,14 @@ func (wxRobot *WXRobot) WaitingForLoginConfirm(uuid string) (string, error) {
 		codes := re.FindStringSubmatch(s)
 		if len(codes) == 0 {
 			log.Printf("find window.code failed, origin response: %s\n", s)
-			return "", ErrUnknow
+			return "", errors.New("Unknow Error")
 		} else {
 			code := codes[1]
 			if code == "408" {
 				log.Println("login timeout, reconnecting...")
-				// }else if code == "400" {
-				// 	log.Println("login timeout, need refresh qrcode")
+			} else if code == "400" {
+				log.Println("login timeout, need refresh qrcode")
+				return "", errors.New("need refresh qr")
 			} else if code == "201" {
 				log.Println("scan success, please confirm login on your phone")
 				tip = "0"
@@ -166,7 +146,7 @@ func (wxRobot *WXRobot) WaitingForLoginConfirm(uuid string) (string, error) {
 				return us[1], nil
 			} else {
 				log.Printf("unknow window.code %s\n", code)
-				return "", ErrUnknow
+				return "", errors.New("Unknow Error")
 			}
 		}
 	}
@@ -271,10 +251,6 @@ func (wxRobot *WXRobot) GetNewLoginUrl() (string, error) {
 	return newLoginUri, nil
 }
 
-type syncStatus struct {
-	Retcode  string
-	Selector string
-}
 
 func (wxRobot *WXRobot) StatusNotify() error {
 	values := &url.Values{}
@@ -351,7 +327,7 @@ func (wxRobot *WXRobot) TestSyncCheck() error {
 	return errors.New("Test SyncCheck error")
 }
 
-func (wxRobot *WXRobot) SyncCheck() (*syncStatus, error) {
+func (wxRobot *WXRobot) SyncCheck() (*SyncStatus, error) {
 	uri := fmt.Sprintf("https://%s/cgi-bin/mmwebwx-bin/synccheck", wxRobot.secret.PushHost)
 	values := &url.Values{}
 	values.Set("r", TimestampStr())
@@ -373,7 +349,7 @@ func (wxRobot *WXRobot) SyncCheck() (*syncStatus, error) {
 		log.Println(s)
 		return nil, errors.New("find Sync check code error")
 	}
-	syncStatus := &syncStatus{Retcode: matchs[1], Selector: matchs[2]}
+	syncStatus := &SyncStatus{Retcode: matchs[1], Selector: matchs[2]}
 	return syncStatus, nil
 }
 
@@ -439,34 +415,55 @@ func (wxRobot *WXRobot) SendMsg(userName, msg string) error {
 	}
 	return wxRobot.CheckCode(b, "发送消息失败")
 }
+
+var (
+	MSG_TEXT       int64 = 1
+	MSG_IMG        int64 = 3
+	MSG_VOICE      int64 = 34
+	MSG_FACE_0     int64 = 43
+	MSG_FACE_1     int64 = 47
+	MSG_LINK       int64 = 49
+	MSG_ENTER_CHAT int64 = 51
+
+	MSG_TYPE_MAP = map[int64]string{
+		MSG_TEXT:       "MSG_TEXT",
+		MSG_IMG:        "MSG_IMG",
+		MSG_VOICE:      "MSG_VOICE",
+		MSG_FACE_0:     "MSG_FACE_0",
+		MSG_FACE_1:     "MSG_FACE_1",
+		MSG_LINK:       "MSG_LINK",
+		MSG_ENTER_CHAT: "MSG_ENTER_CHAT",
+	}
+)
+
 func (wxRobot *WXRobot) HandleMsg(m *Message) {
 	log.Printf("[%s] from %s to %s : %s", MSG_TYPE_MAP[m.MsgType], wxRobot.GetUserName(m.FromUserName), wxRobot.GetUserName(m.ToUserName), m.Content)
 	switch m.MsgType {
-	case TEXT_MSG: // 文本消息
+	case MSG_TEXT: // 文本消息
 		if wxRobot.messageHandler.TextHandler != nil {
 			wxRobot.messageHandler.TextHandler(m)
 		}
-	case IMG_MSG:// 图片消息
+	case MSG_IMG: // 图片消息
 		if wxRobot.messageHandler.ImgHandler != nil {
 			wxRobot.messageHandler.ImgHandler(m)
 		}
-	case VOICE_MSG:// 语音消息
+	case MSG_VOICE: // 语音消息
 		if wxRobot.messageHandler.VoiceHandler != nil {
 			wxRobot.messageHandler.VoiceHandler(m)
 		}
-	case FACE_0_MSG:// 表情消息
+	case MSG_FACE_0: // 表情消息
 		if wxRobot.messageHandler.FaceHandler != nil {
 			wxRobot.messageHandler.FaceHandler(m)
 		}
-	case FACE_1_MSG:// 表情消息
+	case MSG_FACE_1: // 表情消息
 		if wxRobot.messageHandler.FaceHandler != nil {
 			wxRobot.messageHandler.FaceHandler(m)
 		}
-	case LINK_MSG:// 链接消息
+	case MSG_LINK: // 链接消息
 		if wxRobot.messageHandler.LinkHandler != nil {
 			wxRobot.messageHandler.LinkHandler(m)
 		}
-	case ENTER_CHAT_MSG:// 用户在手机进入某个联系人聊天界面时收到的消息
+	case MSG_ENTER_CHAT: // 用户在手机进入某个联系人聊天界面时收到的消息
 		if wxRobot.messageHandler.EnterChatHandler != nil {
 			wxRobot.messageHandler.EnterChatHandler(m)
 		}
@@ -478,6 +475,15 @@ func (wxRobot *WXRobot) HandleMsg(m *Message) {
 	}
 
 }
+
+const (
+	SYSNC_STATUS_RETCODE_LOGOUT_FROM_WX_CLIENT = "1100"
+	SYSNC_STATUS_RETCODE_LOGIN_WEB             = "1101"
+	SYSNC_STATUS_RETCODE_NORMAL                = "0"
+	SYSNC_STATUS_RETCODE_ERROR                 = "1102"
+	SYSNC_STATUS_SELECTOR_NO_UPDATE            = "0"
+	SYSNC_STATUS_SELECTOR_HAVE_UPDATE          = "2"
+)
 
 func (wxRobot *WXRobot) Listening() error {
 	err := wxRobot.TestSyncCheck()
@@ -491,30 +497,37 @@ func (wxRobot *WXRobot) Listening() error {
 			time.Sleep(3 * time.Second)
 			continue
 		}
-		if syncStatus.Retcode == "1100" {
+		switch syncStatus.Retcode {
+		case SYSNC_STATUS_RETCODE_LOGOUT_FROM_WX_CLIENT:
 			return errors.New("从微信客户端上登出")
-		} else if syncStatus.Retcode == "1101" {
+		case SYSNC_STATUS_RETCODE_LOGIN_WEB:
 			return errors.New("从其它设备上登了网页微信")
-		} else if syncStatus.Retcode == "0" {
-			if syncStatus.Selector == "0" { // 无更新
-				continue
-			} else if syncStatus.Selector == "2" { // 有新消息
-				ms, err := wxRobot.Sync()
-				if err != nil {
-					log.Printf("sync err: %s", err.Error())
-				}
-				wxRobot.HandleMsgs(ms)
-			} else { // 可能有其他类型的消息，直接丢弃
-				log.Printf("New Message, Unknow type: %+v", syncStatus)
-				_, err := wxRobot.Sync()
-				if err != nil {
-
-				}
-			}
-		} else if syncStatus.Retcode == "1102" {
+		case SYSNC_STATUS_RETCODE_NORMAL:
+			handleSysncRetCodeNormal(syncStatus)
+		case SYSNC_STATUS_RETCODE_ERROR:
 			return fmt.Errorf("Sync Error %+v", syncStatus)
-		} else {
+		default:
 			log.Printf("sync check Unknow Code: %+v", syncStatus)
+
+		}
+
+	}
+}
+func handleSysncRetCodeNormal(syncStatus *SyncStatus){
+	switch syncStatus.Selector {
+	case SYSNC_STATUS_SELECTOR_NO_UPDATE:
+		break
+	case SYSNC_STATUS_SELECTOR_HAVE_UPDATE:
+		ms, err := wxRobot.Sync()
+		if err != nil {
+			log.Printf("sync err: %s", err.Error())
+		}
+		wxRobot.HandleMsgs(ms)
+	default:
+		log.Printf("New Message, Unknow type: %+v", syncStatus)
+		_, err := wxRobot.Sync()
+		if err != nil {
+
 		}
 	}
 }
@@ -535,10 +548,10 @@ func (wxRobot *WXRobot) Start() error {
 		return err
 	}
 
-	// err = wxRobot.StatusNotify()
-	// if err != nil {
-	// 	return err
-	// }
+	err = wxRobot.StatusNotify()
+	if err != nil {
+		return err
+	}
 
 	err = wxRobot.GetContacts()
 	if err != nil {
