@@ -104,7 +104,7 @@ func (wxApi *WXApi) ShowQRcodeUrl(uuid string) error {
 		*qrStrP = M.Content
 	}
 
-	err=wxApi.handler.ShowQRHandler(qrStrP)
+	err=wxApi.handler.ShowQRHandler(httpbyte)
 
 	if err!=nil{
 		return err
