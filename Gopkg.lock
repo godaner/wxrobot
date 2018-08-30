@@ -19,14 +19,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ecf48b1a67b683360f0f16fed126b35cebf8cbeca4390f31641e6ba4fe19dd76"
-  name = "github.com/larspensjo/config"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b6db95dc6321c46dab9cd53d0c85164a27686aa6"
-
-[[projects]]
-  branch = "master"
   digest = "1:e52b786f6b8d8f111d8ed8dd01ee8ce9efd35ec5a0bfcdc18662cea5f64a84b8"
   name = "github.com/maruel/rs"
   packages = [
@@ -76,7 +68,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/546669204/golang-http-do",
-    "github.com/larspensjo/config",
     "github.com/mdp/qrterminal",
     "github.com/tuotoo/qrcode",
   ]

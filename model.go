@@ -1,4 +1,4 @@
-package wx
+package wxrobot
 type MessageHandler struct {
 	TextHandler      func (*Message)
 	ImgHandler       func (*Message)

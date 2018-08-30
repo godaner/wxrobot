@@ -1,4 +1,4 @@
-package wx
+package wxrobot
 
 var wx *Weixin
 
