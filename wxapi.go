@@ -509,9 +509,9 @@ func (wxApi *WXApi) Listening() error {
 		}
 		switch syncStatus.Retcode {
 		case SYSNC_STATUS_RETCODE_LOGOUT_FROM_WX_CLIENT:
-			return true,errors.New("从微信客户端上登出")
+			return errors.New("从微信客户端上登出")
 		case SYSNC_STATUS_RETCODE_LOGIN_WEB:
-			return true,errors.New("从其它设备上登了网页微信")
+			return errors.New("从其它设备上登了网页微信")
 		case SYSNC_STATUS_RETCODE_NORMAL:
 			err:=wxApi.handleSysncRetCodeNormal(syncStatus)
 			if err!=nil{
