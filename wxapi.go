@@ -509,16 +509,18 @@ func (wxApi *WXApi) Listening() error {
 		}
 		switch syncStatus.Retcode {
 		case SYSNC_STATUS_RETCODE_LOGOUT_FROM_WX_CLIENT:
-			return errors.New("从微信客户端上登出")
+			return true,errors.New("从微信客户端上登出")
 		case SYSNC_STATUS_RETCODE_LOGIN_WEB:
-			return errors.New("从其它设备上登了网页微信")
+			return true,errors.New("从其它设备上登了网页微信")
 		case SYSNC_STATUS_RETCODE_NORMAL:
-			return wxApi.handleSysncRetCodeNormal(syncStatus)
+			err:=wxApi.handleSysncRetCodeNormal(syncStatus)
+			if err!=nil{
+				log.Printf("handleSysncRetCodeNormal err , err is : %s", err.Error())
+			}
 		case SYSNC_STATUS_RETCODE_ERROR:
-			return fmt.Errorf("Sync Error %+v", syncStatus)
+			fmt.Errorf("Sync Error %+v", syncStatus)
 		default:
 			log.Printf("sync check Unknow Code: %+v", syncStatus)
-
 		}
 
 	}
