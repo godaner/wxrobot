@@ -1,25 +1,25 @@
 package wxrobot
 
-var wx *Weixin
+var wxRobot *WXRobot
 
 func Init(messageHandler *MessageHandler) error {
-	wx = NewWeixin(messageHandler)
-	newLoginUri, err := wx.GetNewLoginUrl()
+	wxRobot = NewWeixin(messageHandler)
+	newLoginUri, err := wxRobot.GetNewLoginUrl()
 	if err != nil {
 		return err
 	}
 
-	err = wx.NewLoginPage(newLoginUri)
+	err = wxRobot.NewLoginPage(newLoginUri)
 	if err != nil {
 		return err
 	}
 
-	err = wx.Init()
+	err = wxRobot.Init()
 	if err != nil {
 		return err
 	}
 
-	err = wx.GetContacts()
+	err = wxRobot.GetContacts()
 	if err != nil {
 		return err
 	}
@@ -27,14 +27,14 @@ func Init(messageHandler *MessageHandler) error {
 }
 
 func Listening() error {
-	return wx.Listening()
+	return wxRobot.Listening()
 }
 
 func GetContacts() (map[string]*User, error) {
-	return wx.contacts, nil
+	return wxRobot.contacts, nil
 }
 
 func SendMsg(userId, msg string) error {
-	return wx.SendMsg(userId, msg)
+	return wxRobot.SendMsg(userId, msg)
 }
 

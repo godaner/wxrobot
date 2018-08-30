@@ -44,7 +44,7 @@ var (
 	}
 )
 
-type Weixin struct {
+type WXRobot struct {
 	httpClient     *Client
 	secret         *wxSecret
 	baseRequest    *BaseRequest
@@ -53,8 +53,8 @@ type Weixin struct {
 	messageHandler *MessageHandler
 }
 
-func NewWeixin(messageHandler *MessageHandler) *Weixin {
-	return &Weixin{
+func NewWeixin(messageHandler *MessageHandler) *WXRobot {
+	return &WXRobot{
 		httpClient:     NewClient(),
 		secret:         &wxSecret{},
 		baseRequest:    &BaseRequest{},
@@ -63,7 +63,7 @@ func NewWeixin(messageHandler *MessageHandler) *Weixin {
 	}
 }
 
-func (wx *Weixin) GetUser(userName string) (*User, error) {
+func (wx *WXRobot) GetUser(userName string) (*User, error) {
 	u, ok := wx.contacts[userName]
 	if ok {
 		return u, nil
@@ -72,7 +72,7 @@ func (wx *Weixin) GetUser(userName string) (*User, error) {
 	}
 }
 
-func (wx *Weixin) GetUserName(userName string) string {
+func (wx *WXRobot) GetUserName(userName string) string {
 	u, err := wx.GetUser(userName)
 	if err != nil {
 		return "[myself]"
@@ -84,7 +84,7 @@ func (wx *Weixin) GetUserName(userName string) string {
 	}
 }
 
-func (wx *Weixin) getUuid() (string, error) {
+func (wx *WXRobot) getUuid() (string, error) {
 	values := &url.Values{}
 	values.Set("appid", "wx782c26e4c19acffb")
 	values.Set("fun", "new")
@@ -104,7 +104,7 @@ func (wx *Weixin) getUuid() (string, error) {
 	}
 }
 
-func (wx *Weixin) ShowQRcodeUrl(uuid string) error {
+func (wx *WXRobot) ShowQRcodeUrl(uuid string) error {
 	//qr url
 	qrStr := fmt.Sprintf("%s/qrcode/%s", LoginUri, uuid)
 
@@ -128,7 +128,7 @@ func (wx *Weixin) ShowQRcodeUrl(uuid string) error {
 	return nil
 }
 
-func (wx *Weixin) WaitingForLoginConfirm(uuid string) (string, error) {
+func (wx *WXRobot) WaitingForLoginConfirm(uuid string) (string, error) {
 	re := regexp.MustCompile(`window.code=([0-9]*);`)
 	tip := "1"
 	for {
@@ -136,7 +136,7 @@ func (wx *Weixin) WaitingForLoginConfirm(uuid string) (string, error) {
 		values.Set("uuid", uuid)
 		values.Set("tip", tip)
 		values.Set("_", TimestampStr())
-		b, err := wx.httpClient.Get("https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login", values)
+		b, err := wx.httpClient.Get("https://login.wxRobot.qq.com/cgi-bin/mmwebwx-bin/login", values)
 		if err != nil {
 			log.Printf("HTTP GET err: %s", err.Error())
 			return "", err
@@ -191,7 +191,7 @@ func findTicket(s string) (*ticket, error) {
 	}, nil
 }
 
-func (wx *Weixin) NewLoginPage(newLoginUri string) error {
+func (wx *WXRobot) NewLoginPage(newLoginUri string) error {
 	b, err := wx.httpClient.Get(newLoginUri+"&fun=new", nil)
 	if err != nil {
 		log.Printf("HTTP GET err: %s", err.Error())
@@ -214,7 +214,7 @@ func (wx *Weixin) NewLoginPage(newLoginUri string) error {
 
 }
 
-func (wx *Weixin) Init() error {
+func (wx *WXRobot) Init() error {
 	values := &url.Values{}
 	values.Set("r", TimestampStr())
 	values.Set("lang", "en_US")
@@ -246,7 +246,7 @@ func (wx *Weixin) Init() error {
 	return fmt.Errorf("Init error: %+v", r.BaseResponse)
 }
 
-func (wx *Weixin) updateSyncKey(s *SyncKey) {
+func (wx *WXRobot) updateSyncKey(s *SyncKey) {
 	wx.secret.SyncKey = s
 	syncKeys := make([]string, s.Count)
 	for n, k := range s.List {
@@ -255,7 +255,7 @@ func (wx *Weixin) updateSyncKey(s *SyncKey) {
 	wx.secret.SyncKeyStr = strings.Join(syncKeys, "|")
 }
 
-func (wx *Weixin) GetNewLoginUrl() (string, error) {
+func (wx *WXRobot) GetNewLoginUrl() (string, error) {
 	uuid, err := wx.getUuid()
 	if err != nil {
 		return "", err
@@ -276,7 +276,7 @@ type syncStatus struct {
 	Selector string
 }
 
-func (wx *Weixin) StatusNotify() error {
+func (wx *WXRobot) StatusNotify() error {
 	values := &url.Values{}
 	values.Set("lang", "zh_CN")
 	values.Set("pass_ticket", wx.secret.PassTicket)
@@ -294,7 +294,7 @@ func (wx *Weixin) StatusNotify() error {
 	return wx.CheckCode(b, "Status Notify error")
 }
 
-func (wx *Weixin) CheckCode(b []byte, errmsg string) error {
+func (wx *WXRobot) CheckCode(b []byte, errmsg string) error {
 	var r InitResponse
 	err := json.Unmarshal(b, &r)
 	if err != nil {
@@ -306,7 +306,7 @@ func (wx *Weixin) CheckCode(b []byte, errmsg string) error {
 	return nil
 }
 
-func (wx *Weixin) GetContacts() error {
+func (wx *WXRobot) GetContacts() error {
 	values := &url.Values{}
 	values.Set("seq", "0")
 	values.Set("pass_ticket", wx.secret.PassTicket)
@@ -330,7 +330,7 @@ func (wx *Weixin) GetContacts() error {
 	return wx.updateContacts(r.MemberList)
 }
 
-func (wx *Weixin) updateContacts(us []*User) error {
+func (wx *WXRobot) updateContacts(us []*User) error {
 	for _, u := range us {
 		wx.contacts[u.UserName] = u
 		log.Printf("%s => %s", u.UserName, u.NickName)
@@ -338,7 +338,7 @@ func (wx *Weixin) updateContacts(us []*User) error {
 	return nil
 }
 
-func (wx *Weixin) TestSyncCheck() error {
+func (wx *WXRobot) TestSyncCheck() error {
 	for _, h := range []string{"webpush.", "webpush2."} {
 		wx.secret.PushHost = h + wx.secret.Host
 		syncStatus, err := wx.SyncCheck()
@@ -351,7 +351,7 @@ func (wx *Weixin) TestSyncCheck() error {
 	return errors.New("Test SyncCheck error")
 }
 
-func (wx *Weixin) SyncCheck() (*syncStatus, error) {
+func (wx *WXRobot) SyncCheck() (*syncStatus, error) {
 	uri := fmt.Sprintf("https://%s/cgi-bin/mmwebwx-bin/synccheck", wx.secret.PushHost)
 	values := &url.Values{}
 	values.Set("r", TimestampStr())
@@ -377,7 +377,7 @@ func (wx *Weixin) SyncCheck() (*syncStatus, error) {
 	return syncStatus, nil
 }
 
-func (wx *Weixin) Sync() ([]*Message, error) {
+func (wx *WXRobot) Sync() ([]*Message, error) {
 	values := &url.Values{}
 	values.Set("sid", wx.secret.Sid)
 	values.Set("skey", wx.secret.Skey)
@@ -407,17 +407,17 @@ func (wx *Weixin) Sync() ([]*Message, error) {
 	return r.MsgList, nil
 }
 
-func (wx *Weixin) HandleMsgs(ms []*Message) {
+func (wx *WXRobot) HandleMsgs(ms []*Message) {
 	for _, m := range ms {
 		wx.HandleMsg(m)
 	}
 }
 
-func (wx *Weixin) SendMsgToMyself(msg string) error {
+func (wx *WXRobot) SendMsgToMyself(msg string) error {
 	return wx.SendMsg(wx.user.UserName, msg)
 }
 
-func (wx *Weixin) SendMsg(userName, msg string) error {
+func (wx *WXRobot) SendMsg(userName, msg string) error {
 	values := &url.Values{}
 	values.Set("pass_ticket", wx.secret.PassTicket)
 	url := fmt.Sprintf("%s/webwxsendmsg?%s", wx.secret.BaseUri, values.Encode())
@@ -439,7 +439,7 @@ func (wx *Weixin) SendMsg(userName, msg string) error {
 	}
 	return wx.CheckCode(b, "发送消息失败")
 }
-func (wx *Weixin) HandleMsg(m *Message) {
+func (wx *WXRobot) HandleMsg(m *Message) {
 	log.Printf("[%s] from %s to %s : %s", MSG_TYPE_MAP[m.MsgType], wx.GetUserName(m.FromUserName), wx.GetUserName(m.ToUserName), m.Content)
 	switch m.MsgType {
 	case TEXT_MSG: // 文本消息
@@ -479,7 +479,7 @@ func (wx *Weixin) HandleMsg(m *Message) {
 
 }
 
-func (wx *Weixin) Listening() error {
+func (wx *WXRobot) Listening() error {
 	err := wx.TestSyncCheck()
 	if err != nil {
 		return err
@@ -519,7 +519,7 @@ func (wx *Weixin) Listening() error {
 	}
 }
 
-func (wx *Weixin) Start() error {
+func (wx *WXRobot) Start() error {
 	newLoginUri, err := wx.GetNewLoginUrl()
 	if err != nil {
 		return err
@@ -535,7 +535,7 @@ func (wx *Weixin) Start() error {
 		return err
 	}
 
-	// err = wx.StatusNotify()
+	// err = wxRobot.StatusNotify()
 	// if err != nil {
 	// 	return err
 	// }
